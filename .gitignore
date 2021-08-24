@@ -30,7 +30,9 @@ hs_err_pid*
 .classpath
 .vscode/
 .vs/
-*.user
+*.csproj.user
+*.pubxml
+*.pubxml.user
 
 # macOS
 .DS_Store
