@@ -5,7 +5,7 @@
         public string Authority { get; set; }
         public string Audience { get; set; }
 
-        public string NameClaimType { get; set; } = "unique_name";
-        public string RoleClaimType { get; set; } = "role";
+        public string NameClaimType { get; set; }
+        public string RoleClaimType { get; set; }
     }
 }

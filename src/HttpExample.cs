@@ -11,7 +11,7 @@ namespace test_func_6
     public class HttpExample
     {
         [FunctionName("HttpExample")]
-        [FunctionAuthorize(Role = "CwAdmin")]
+        [FunctionAuthorize(Role = "admins")]
         public IActionResult Run(
             [HttpTrigger(AuthorizationLevel.User, "get", "post", Route = null)] HttpRequest req,
             ClaimsPrincipal claimsPrincipal,
@@ -21,8 +21,7 @@ namespace test_func_6
 
             string name = req.Query["name"];
 
-            string responseMessage = "HTTP triggered function: " + name + " executed successfully for user "
-                + claimsPrincipal.Identity.Name;
+            string responseMessage = $"HTTP triggered function: {name} executed successfully for user {claimsPrincipal.Identity.Name}";
 
             return new OkObjectResult(responseMessage);
         }

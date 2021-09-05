@@ -24,7 +24,7 @@ namespace test_func_6.Auth
                     var accessTokenOptionsMonitor = serviceProvider.GetRequiredService<IOptionsMonitor<AccessTokenOptions>>();
                     var accessTokenOptions = accessTokenOptionsMonitor.CurrentValue;
                     var configurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(
-                        accessTokenOptions.Authority + "/.well-known/openid-configuration",
+                        $"{accessTokenOptions.Authority}/.well-known/openid-configuration",
                         new OpenIdConnectConfigurationRetriever(),
                         new HttpDocumentRetriever { RequireHttps = true }
                     );
@@ -71,8 +71,8 @@ namespace test_func_6.Auth
 
         private static void Configure(this TokenValidationParameters validationParameters, AccessTokenOptions options)
         {
-            validationParameters.NameClaimType = "unique_name";
-            validationParameters.RoleClaimType = "role";
+            validationParameters.NameClaimType = options.NameClaimType;
+            validationParameters.RoleClaimType = options.RoleClaimType;
             validationParameters.RequireSignedTokens = true;
             validationParameters.ValidAudience = options.Audience;
             validationParameters.ValidateAudience = true;
