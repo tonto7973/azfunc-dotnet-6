@@ -31,8 +31,8 @@ hs_err_pid*
 .vscode/
 .vs/
 *.csproj.user
-*.pubxml
-*.pubxml.user
+src/Properties/ServiceDependencies/
+src/Properties/PublishProfiles/
 
 # macOS
 .DS_Store
@@ -44,3 +44,4 @@ obj/
 # Terraform
 .terraform/
 .terraform.lock.hcl
+*.tfstate
