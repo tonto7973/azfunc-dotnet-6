@@ -9,77 +9,77 @@ using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 
-namespace test_func_6.Auth
-{
-    public static class ServiceCollectionExtensions
-    {
-        public static IServiceCollection AddAccessTokenAuthorization(this IServiceCollection services)
-        {
-            new AuthenticationBuilder(services)
-                .AddJwtBearer();
+namespace test_func_6.Auth;
 
-            services.AddSingleton<IPostConfigureOptions<JwtBearerOptions>>(serviceProvider =>
-                new PostConfigureOptions<JwtBearerOptions>(null, options =>
+public static class ServiceCollectionExtensions
+{
+    public static IServiceCollection AddAccessTokenAuthorization(this IServiceCollection services)
+    {
+        new AuthenticationBuilder(services)
+            .AddJwtBearer();
+
+        services.AddSingleton<IPostConfigureOptions<JwtBearerOptions>>(serviceProvider =>
+            new PostConfigureOptions<JwtBearerOptions>(null, options =>
+            {
+                var accessTokenOptionsMonitor = serviceProvider.GetRequiredService<IOptionsMonitor<AccessTokenOptions>>();
+                var accessTokenOptions = accessTokenOptionsMonitor.CurrentValue;
+                var configurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(
+                    $"{accessTokenOptions.Authority}/.well-known/openid-configuration",
+                    new OpenIdConnectConfigurationRetriever(),
+                    new HttpDocumentRetriever { RequireHttps = true }
+                );
+                var tokenValidator = new AccessTokenValidator(options);
+                var tokenHandler = new JwtSecurityTokenHandler();
+                tokenHandler.InboundClaimTypeMap.Clear();
+                options.TokenValidationParameters.Configure(accessTokenOptions);
+                options.SecurityTokenValidators.Clear();
+                options.SecurityTokenValidators.Add(tokenHandler);
+                options.ConfigurationManager = configurationManager;
+                options.Events = new JwtBearerEvents
                 {
-                    var accessTokenOptionsMonitor = serviceProvider.GetRequiredService<IOptionsMonitor<AccessTokenOptions>>();
-                    var accessTokenOptions = accessTokenOptionsMonitor.CurrentValue;
-                    var configurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(
-                        $"{accessTokenOptions.Authority}/.well-known/openid-configuration",
-                        new OpenIdConnectConfigurationRetriever(),
-                        new HttpDocumentRetriever { RequireHttps = true }
-                    );
-                    var tokenValidator = new AccessTokenValidator(options);
-                    var tokenHandler = new JwtSecurityTokenHandler();
-                    tokenHandler.InboundClaimTypeMap.Clear();
-                    options.TokenValidationParameters.Configure(accessTokenOptions);
-                    options.SecurityTokenValidators.Clear();
-                    options.SecurityTokenValidators.Add(tokenHandler);
-                    options.ConfigurationManager = configurationManager;
-                    options.Events = new JwtBearerEvents
+                    OnMessageReceived = async (context) =>
                     {
-                        OnMessageReceived = async (context) =>
+                        var parsed = AuthenticationHeaderValue.TryParse(context.Request.Headers["Authorization"], out var authHeader);
+                        if (parsed)
                         {
-                            var parsed = AuthenticationHeaderValue.TryParse(context.Request.Headers["Authorization"], out var authHeader);
-                            if (parsed)
+                            try
                             {
-                                try
-                                {
-                                    context.Principal = await tokenValidator.ValidateAsync(authHeader);
-                                    context.Success();
-                                }
-                                catch (SecurityTokenException ex)
-                                {
-                                    context.Fail(ex);
-                                }
+                                context.Principal = await tokenValidator.ValidateAsync(authHeader);
+                                context.Success();
+                            }
+                            catch (SecurityTokenException ex)
+                            {
+                                context.Fail(ex);
                             }
                         }
-                    };
-                })
-            );
-            services.AddAuthorization(options =>
-            {
-                options.AddPolicy("AuthLevelUser", p =>
-                {
-                    p.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
-                    p.RequireAssertion(_ => true);
-                });
-            });
-            services.AddSingleton<IAuthorizationHandler, AccessTokenAuthorizationHandler>();
-
-            return services;
-        }
-
-        private static void Configure(this TokenValidationParameters validationParameters, AccessTokenOptions options)
+                    }
+                };
+            })
+        );
+        services.AddAuthorization(options =>
         {
-            validationParameters.NameClaimType = options.NameClaimType;
-            validationParameters.RoleClaimType = options.RoleClaimType;
-            validationParameters.RequireSignedTokens = true;
-            validationParameters.ValidAudience = options.Audience;
-            validationParameters.ValidateAudience = true;
-            validationParameters.ValidIssuer = options.Authority;
-            validationParameters.ValidateIssuer = true;
-            validationParameters.ValidateIssuerSigningKey = true;
-            validationParameters.ValidateLifetime = true;
-        }
+            options.AddPolicy("AuthLevelUser", p =>
+            {
+                p.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
+                p.RequireAssertion(_ => true);
+            });
+        });
+        services.AddSingleton<IAuthorizationHandler, AccessTokenAuthorizationHandler>();
+
+        return services;
+    }
+
+    private static void Configure(this TokenValidationParameters validationParameters, AccessTokenOptions options)
+    {
+        validationParameters.NameClaimType = options.NameClaimType;
+        validationParameters.RoleClaimType = options.RoleClaimType;
+        validationParameters.RequireSignedTokens = true;
+        validationParameters.ValidAudience = options.Audience;
+        validationParameters.ValidateAudience = true;
+        validationParameters.ValidIssuer = options.Authority;
+        validationParameters.ValidateIssuer = true;
+        validationParameters.ValidateIssuerSigningKey = true;
+        validationParameters.ValidateLifetime = true;
     }
 }
+

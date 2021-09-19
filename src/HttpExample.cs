@@ -6,24 +6,23 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using test_func_6.Auth;
 
-namespace test_func_6
+namespace test_func_6;
+
+public class HttpExample
 {
-    public class HttpExample
+    [FunctionName("HttpExample")]
+    [FunctionAuthorize(Role = "admins")]
+    public IActionResult Run(
+        [HttpTrigger(AuthorizationLevel.User, "get", "post", Route = null)] HttpRequest req,
+        ClaimsPrincipal claimsPrincipal,
+        ILogger log)
     {
-        [FunctionName("HttpExample")]
-        [FunctionAuthorize(Role = "admins")]
-        public IActionResult Run(
-            [HttpTrigger(AuthorizationLevel.User, "get", "post", Route = null)] HttpRequest req,
-            ClaimsPrincipal claimsPrincipal,
-            ILogger log)
-        {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+        log.LogInformation("C# HTTP trigger function processed a request.");
 
-            string name = req.Query["name"];
+        string name = req.Query["name"];
 
-            string responseMessage = $"HTTP triggered function: {name} executed successfully for user {claimsPrincipal.Identity.Name}";
+        string responseMessage = $"HTTP triggered function: {name} executed successfully for user {claimsPrincipal.Identity.Name}";
 
-            return new OkObjectResult(responseMessage);
-        }
+        return new OkObjectResult(responseMessage);
     }
 }

@@ -2,27 +2,26 @@
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace test_func_6.Auth
+namespace test_func_6.Auth;
+
+public class AccessTokenAuthorizationHandler : IAuthorizationHandler
 {
-    public class AccessTokenAuthorizationHandler : IAuthorizationHandler
+    private readonly IOptionsMonitor<AccessTokenOptions> _options;
+
+    public AccessTokenAuthorizationHandler(IOptionsMonitor<AccessTokenOptions> options)
     {
-        private readonly IOptionsMonitor<AccessTokenOptions> _options;
+        _options = options ?? throw new ArgumentNullException(nameof(options));
+    }
 
-        public AccessTokenAuthorizationHandler(IOptionsMonitor<AccessTokenOptions> options)
+    public Task HandleAsync(AuthorizationHandlerContext context)
+    {
+        var accessTokenIdentity = context.User?.Identities?
+            .FirstOrDefault(i => i.AuthenticationType == TokenValidationParameters.DefaultAuthenticationType
+                              && i.HasClaim("iss", _options.CurrentValue.Authority));
+        if (accessTokenIdentity != null)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            context.Succeed(context.Requirements.First());
         }
-
-        public Task HandleAsync(AuthorizationHandlerContext context)
-        {
-            var accessTokenIdentity = context.User?.Identities?
-                .FirstOrDefault(i => i.AuthenticationType == TokenValidationParameters.DefaultAuthenticationType
-                                  && i.HasClaim("iss", _options.CurrentValue.Authority));
-            if (accessTokenIdentity != null)
-            {
-                context.Succeed(context.Requirements.First());
-            }
-            return Task.CompletedTask;
-        }
+        return Task.CompletedTask;
     }
 }
