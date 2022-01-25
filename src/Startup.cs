@@ -1,8 +1,4 @@
-﻿global using System;
-global using System.Linq;
-global using System.Threading;
-global using System.Threading.Tasks;
-using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+﻿using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using test_func_6.Auth;
 
